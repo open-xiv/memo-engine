@@ -53,8 +53,13 @@ jobs:
                   files: ./nupkg/*.nupkg
 
             - name: Publish to GitHub Packages
+              shell: pwsh
               run: |
-                  dotnet nuget add source --username open-xiv --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/open-xiv/index.json"
-                  dotnet nuget push ./nupkg/*.nupkg --source github --api-key ${{ secrets.GITHUB_TOKEN }} --skip-duplicate
+                  Get-ChildItem ./nupkg/*.nupkg | ForEach-Object {
+                    dotnet nuget push $_.FullName `
+                      --source "https://nuget.pkg.github.com/open-xiv/index.json" `
+                      --api-key $env:GITHUB_TOKEN `
+                      --skip-duplicate
+                  }
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
