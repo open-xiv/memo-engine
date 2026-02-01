@@ -1,0 +1,60 @@
+name: Build and Release
+
+on:
+    push:
+        branches:
+            - main
+
+permissions:
+    contents: write
+    packages: write
+
+jobs:
+    build-and-release:
+        runs-on: windows-latest
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Setup .NET
+              uses: actions/setup-dotnet@v4
+              with:
+                  dotnet-version: 10.0.x
+
+            - name: Restore
+              run: dotnet restore
+
+            - name: Build
+              run: dotnet build --configuration Release --no-restore
+
+            - name: Pack NuGet package
+              run: dotnet pack MemoEngine/MemoEngine.csproj --configuration Release --no-build --output ./nupkg
+
+            - name: Read Version
+              id: version
+              shell: pwsh
+              run: |
+                  [xml]$csproj = Get-Content MemoEngine/MemoEngine.csproj
+                  $version = $csproj.Project.PropertyGroup.Version
+                  echo "version=$version" >> $env:GITHUB_OUTPUT
+
+            - name: Create Git Tag
+              run: |
+                  git config user.name "github-actions[bot]"
+                  git config user.email "github-actions[bot]@users.noreply.github.com"
+                  git tag v${{ steps.version.outputs.version }}
+                  git push origin v${{ steps.version.outputs.version }}
+
+            - name: Create GitHub Release
+              uses: softprops/action-gh-release@v2
+              with:
+                  tag_name: v${{ steps.version.outputs.version }}
+                  files: ./nupkg/*.nupkg
+
+            - name: Publish to GitHub Packages
+              run: |
+                  dotnet nuget add source --username open-xiv --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/open-xiv/index.json"
+                  dotnet nuget push ./nupkg/*.nupkg --source github --api-key ${{ secrets.GITHUB_TOKEN }} --skip-duplicate
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
