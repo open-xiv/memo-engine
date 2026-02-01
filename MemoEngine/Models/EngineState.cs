@@ -4,6 +4,5 @@ public enum EngineState
 {
     Idle,
     WaitingStart,
-    Recording,
-    Finalizing
+    Recording
 }

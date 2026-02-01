@@ -44,11 +44,14 @@ internal class FightContext
 
     #region Lifecycle
 
-    public FightContext(DutyConfig dutyConfig)
+    private readonly Context context;
+
+    public FightContext(Context context, DutyConfig dutyConfig)
     {
+        this.context    = context;
         this.dutyConfig = dutyConfig;
         ResetState();
-        Context.Lifecycle = EngineState.WaitingStart;
+        context.Lifecycle = EngineState.WaitingStart;
     }
 
     #endregion
@@ -60,7 +63,7 @@ internal class FightContext
         // lifecycle related events
         LifecycleEvent(e);
 
-        if (Context.Lifecycle is not EngineState.Recording)
+        if (context.Lifecycle is not EngineState.Recording)
             return;
 
         // specific events
@@ -72,7 +75,7 @@ internal class FightContext
                 break;
 
             // enemy hp change
-            case CombatantHpUpdated hpChanged when hpChanged.DataId == Context.EnemyDataId:
+            case CombatantHpUpdated hpChanged when hpChanged.DataId == context.EnemyDataId:
                 enemyHp = hpChanged.MaxHp == 0 ? 1 : hpChanged.CurrentHp / hpChanged.MaxHp;
                 break;
         }
@@ -91,11 +94,11 @@ internal class FightContext
         switch (e)
         {
             case CombatOptIn st:
-                if (Context.Lifecycle is EngineState.WaitingStart)
+                if (context.Lifecycle is EngineState.WaitingStart)
                 {
                     ResetState();
                     StartSnap(st.PartyPlayers);
-                    Context.Lifecycle = EngineState.Recording;
+                    context.Lifecycle = EngineState.Recording;
                 }
                 break;
 
@@ -104,21 +107,16 @@ internal class FightContext
                 break;
 
             case DutyWiped:
-                Context.Lifecycle = EngineState.Finalizing;
-                isClear           = false;
+                isClear = false;
+                CompletedSnap();
+                context.Lifecycle = EngineState.WaitingStart;
+
                 break;
 
             case DutyCompleted:
-                Context.Lifecycle = EngineState.Finalizing;
-                isClear           = true;
-                break;
-
-            case DutyEnd:
-                if (Context.Lifecycle is EngineState.Finalizing)
-                {
-                    CompletedSnap();
-                    Context.Lifecycle = EngineState.WaitingStart;
-                }
+                isClear = true;
+                CompletedSnap();
+                context.Lifecycle = EngineState.WaitingStart;
                 break;
         }
     }
@@ -157,7 +155,7 @@ internal class FightContext
         {
             PhaseId    = (uint)Math.Max(phaseIndex, 0),
             SubphaseId = (uint)Math.Max(subphaseIndex, 0),
-            EnemyId    = Context.EnemyDataId,
+            EnemyId    = context.EnemyDataId,
             EnemyHp    = enemyHp
         };
 
@@ -173,7 +171,7 @@ internal class FightContext
         };
 
         // notify
-        _ = Task.Run(() => Context.RaiseFightFinalized(payload));
+        _ = Task.Run(() => context.RaiseFightFinalized(payload));
     }
 
     #endregion
@@ -188,7 +186,7 @@ internal class FightContext
         subphaseIndex = -1;
 
         // enemy
-        Context.EnemyDataId = 0;
+        context.EnemyDataId = 0;
 
         // init listeners & variables
         listenerManager.Clear();
@@ -208,7 +206,7 @@ internal class FightContext
         subphaseIndex = -1;
 
         // enemy
-        Context.EnemyDataId = phase.TargetId;
+        context.EnemyDataId = phase.TargetId;
 
         // clear triggers
         listenerManager.Clear();
@@ -232,7 +230,7 @@ internal class FightContext
             listenerManager.Register(new ListenerState(mechanic, mechanic.Trigger));
 
         // enemy
-        Context.EnemyDataId = phase.TargetId;
+        context.EnemyDataId = phase.TargetId;
     }
 
     private void EmitMechanic(Mechanic mechanic)
@@ -305,15 +303,15 @@ internal class FightContext
         {
             case "ACTION_EVENT":
                 if (e is IActionEvent actionEvent)
-                    return Event.Match(actionEvent, trigger);
+                    return EventTools.Match(actionEvent, trigger);
                 return false;
             case "COMBATANT_EVENT":
                 if (e is ICombatantEvent combatantEvent)
-                    return Event.Match(combatantEvent, trigger);
+                    return EventTools.Match(combatantEvent, trigger);
                 return false;
             case "STATUS_EVENT":
                 if (e is IStatusEvent statusEvent)
-                    return Event.Match(statusEvent, trigger);
+                    return EventTools.Match(statusEvent, trigger);
                 return false;
             default:
                 return false;

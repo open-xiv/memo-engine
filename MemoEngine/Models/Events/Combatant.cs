@@ -1,5 +1,4 @@
 using System;
-using MemoEngine.Engine;
 
 
 namespace MemoEngine.Models.Events;
@@ -57,20 +56,20 @@ public interface ICombatantSink
     void RaiseHpUpdated(DateTimeOffset timeStamp, uint dataId, double currentHp, double maxHp);
 }
 
-internal sealed class CombatantSink : ICombatantSink
+internal sealed class CombatantSink(Action<IEvent> postEvent) : ICombatantSink
 {
     public void RaiseSpawned(DateTimeOffset timeStamp, uint dataId)
-        => RuleEngine.PostEvent(new CombatantSpawned(timeStamp, dataId));
+        => postEvent(new CombatantSpawned(timeStamp, dataId));
 
     public void RaiseDestroyed(DateTimeOffset timeStamp, uint dataId)
-        => RuleEngine.PostEvent(new CombatantDestroyed(timeStamp, dataId));
+        => postEvent(new CombatantDestroyed(timeStamp, dataId));
 
     public void RaiseBecameTargetable(DateTimeOffset timeStamp, uint dataId)
-        => RuleEngine.PostEvent(new CombatantBecameTargetable(timeStamp, dataId));
+        => postEvent(new CombatantBecameTargetable(timeStamp, dataId));
 
     public void RaiseBecameUntargetable(DateTimeOffset timeStamp, uint dataId)
-        => RuleEngine.PostEvent(new CombatantBecameUntargetable(timeStamp, dataId));
+        => postEvent(new CombatantBecameUntargetable(timeStamp, dataId));
 
     public void RaiseHpUpdated(DateTimeOffset timeStamp, uint dataId, double currentHp, double maxHp)
-        => RuleEngine.PostEvent(new CombatantHpUpdated(timeStamp, dataId, currentHp, maxHp));
+        => postEvent(new CombatantHpUpdated(timeStamp, dataId, currentHp, maxHp));
 }

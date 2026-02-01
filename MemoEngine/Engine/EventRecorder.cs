@@ -5,7 +5,7 @@ using MemoEngine.Models.Events;
 
 namespace MemoEngine.Engine;
 
-internal class EventRecorder(int maxEventHistory)
+internal class EventRecorder(Context context, int maxEventHistory)
 {
     private readonly ConcurrentQueue<FormattableString> eventHistory = [];
 
@@ -15,6 +15,6 @@ internal class EventRecorder(int maxEventHistory)
         while (eventHistory.Count > maxEventHistory)
             eventHistory.TryDequeue(out _);
 
-        Context.EventHistory = eventHistory.ToArray();
+        context.EventHistory = eventHistory.ToArray();
     }
 }

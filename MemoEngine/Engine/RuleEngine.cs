@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using MemoEngine.Api;
 using MemoEngine.Models;
@@ -7,38 +8,48 @@ using MemoEngine.Models.Events;
 
 namespace MemoEngine.Engine;
 
-internal static class RuleEngine
+internal class RuleEngine : IDisposable
 {
     // event queue & history
-    private static readonly ActionBlock<IEvent> EventQueue;
-    private static readonly EventRecorder       EventHistory = new(1000);
+    private readonly ActionBlock<IEvent> eventQueue;
+    private readonly EventRecorder       eventHistory;
 
-    // fight context
-    private static FightContext? FightContext;
+    // lib & fight context
+    private readonly Context       context;
+    private          FightContext? fightContext;
 
-    static RuleEngine()
+    // http client
+    private readonly ApiClient apiClient;
+
+    public RuleEngine(Context context)
     {
-        EventQueue = new ActionBlock<IEvent>(ProcessEventAsync, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 1 });
+        this.context = context;
+        apiClient    = new ApiClient();
+        eventHistory = new EventRecorder(context, 1000);
+        eventQueue   = new ActionBlock<IEvent>(ProcessEventAsync, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 1 });
     }
 
 
-    public static void PostEvent(IEvent e)
-        => EventQueue.Post(e);
+    public void PostEvent(IEvent e)
+        => eventQueue.Post(e);
 
-    private static async Task ProcessEventAsync(IEvent e)
+    private async Task ProcessEventAsync(IEvent e)
     {
         // event logs
-        EventHistory.Record(e);
+        eventHistory.Record(e);
 
         if (e is TerritoryChanged tc)
         {
-            var duty = await ApiClient.FetchDuty(tc.ZoneId);
-            FightContext = duty is not null ? new FightContext(duty) : null;
+            var duty = await apiClient.FetchDuty(tc.ZoneId);
+            fightContext = duty is not null ? new FightContext(context, duty) : null;
 
-            if (FightContext is null)
-                Context.Lifecycle = EngineState.Idle;
+            if (fightContext is null)
+                context.Lifecycle = EngineState.Idle;
         }
 
-        FightContext?.ProcessEvent(e);
+        fightContext?.ProcessEvent(e);
     }
+
+    public void Dispose()
+        => apiClient.Dispose();
 }

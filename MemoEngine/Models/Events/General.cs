@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using MemoEngine.Engine;
 
 
 namespace MemoEngine.Models.Events;
@@ -10,26 +9,8 @@ internal class TerritoryChanged(DateTimeOffset timeStamp, ushort zoneId) : BaseE
     public ushort ZoneId { get; } = zoneId;
 }
 
-internal class DutyStarted(DateTimeOffset   timeStamp) : BaseEvent(timeStamp);
 internal class DutyCompleted(DateTimeOffset timeStamp) : BaseEvent(timeStamp);
 internal class DutyWiped(DateTimeOffset     timeStamp) : BaseEvent(timeStamp);
-
-internal class DutyEnd : BaseEvent
-{
-    // dalamud
-    public DutyEnd(DateTimeOffset timeStamp) : base(timeStamp)
-    {
-        Payload = null;
-    }
-
-    // act
-    public DutyEnd(DateTimeOffset timeStamp, FightRecordPayload payload) : base(timeStamp)
-    {
-        Payload = payload;
-    }
-
-    public FightRecordPayload? Payload { get; }
-}
 
 internal class CombatOptIn(DateTimeOffset timeStamp, IReadOnlyDictionary<uint, PlayerPayload>? partyPlayers) : BaseEvent(timeStamp)
 {
@@ -54,14 +35,9 @@ public interface IGeneralSink
 {
     void RaiseTerritoryChanged(DateTimeOffset timeStamp, ushort zoneId);
 
-
-    void RaiseDutyStarted(DateTimeOffset timeStamp);
-
     void RaiseDutyCompleted(DateTimeOffset timeStamp);
 
     void RaiseDutyWiped(DateTimeOffset timeStamp);
-
-    void RaiseDutyEnd(DateTimeOffset timeStamp);
 
     void RaiseCombatOptIn(DateTimeOffset timeStamp, IReadOnlyDictionary<uint, PlayerPayload>? partyPlayers);
 
@@ -72,32 +48,26 @@ public interface IGeneralSink
     void RaisePartyChanged(DateTimeOffset timeStamp, IReadOnlyList<uint> entityIds);
 }
 
-internal sealed class GeneralSink : IGeneralSink
+internal sealed class GeneralSink(Action<IEvent> postEvent) : IGeneralSink
 {
     public void RaiseTerritoryChanged(DateTimeOffset timeStamp, ushort zoneId)
-        => RuleEngine.PostEvent(new TerritoryChanged(timeStamp, zoneId));
-
-    public void RaiseDutyStarted(DateTimeOffset timeStamp)
-        => RuleEngine.PostEvent(new DutyStarted(timeStamp));
+        => postEvent(new TerritoryChanged(timeStamp, zoneId));
 
     public void RaiseDutyCompleted(DateTimeOffset timeStamp)
-        => RuleEngine.PostEvent(new DutyCompleted(timeStamp));
+        => postEvent(new DutyCompleted(timeStamp));
 
     public void RaiseDutyWiped(DateTimeOffset timeStamp)
-        => RuleEngine.PostEvent(new DutyWiped(timeStamp));
-
-    public void RaiseDutyEnd(DateTimeOffset timeStamp)
-        => RuleEngine.PostEvent(new DutyEnd(timeStamp));
+        => postEvent(new DutyWiped(timeStamp));
 
     public void RaiseCombatOptIn(DateTimeOffset timeStamp, IReadOnlyDictionary<uint, PlayerPayload>? partyPlayers)
-        => RuleEngine.PostEvent(new CombatOptIn(timeStamp, partyPlayers));
+        => postEvent(new CombatOptIn(timeStamp, partyPlayers));
 
     public void RaiseCombatOptOut(DateTimeOffset timeStamp)
-        => RuleEngine.PostEvent(new CombatOptOut(timeStamp));
+        => postEvent(new CombatOptOut(timeStamp));
 
     public void RaisePlayerDied(DateTimeOffset timeStamp, uint entityId)
-        => RuleEngine.PostEvent(new PlayerDied(timeStamp, entityId));
+        => postEvent(new PlayerDied(timeStamp, entityId));
 
     public void RaisePartyChanged(DateTimeOffset timeStamp, IReadOnlyList<uint> entityIds)
-        => RuleEngine.PostEvent(new PartyChanged(timeStamp, entityIds));
+        => postEvent(new PartyChanged(timeStamp, entityIds));
 }

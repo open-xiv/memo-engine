@@ -10,17 +10,17 @@ using Newtonsoft.Json;
 
 namespace MemoEngine.Api;
 
-internal static class ApiClient
+internal sealed class ApiClient : IDisposable
 {
-    private static readonly HttpClient Client;
+    private readonly HttpClient client;
 
-    private static readonly string[] AssetUrls =
+    private readonly string[] assetUrls =
     [
         "https://assets.sumemo.dev",
         "https://haku.diemoe.net/assets"
     ];
 
-    static ApiClient()
+    public ApiClient()
     {
         ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 
@@ -31,13 +31,13 @@ internal static class ApiClient
             UseProxy                = false
         };
 
-        Client         = new HttpClient(handler);
-        Client.Timeout = TimeSpan.FromSeconds(5);
+        client         = new HttpClient(handler);
+        client.Timeout = TimeSpan.FromSeconds(5);
     }
 
-    public static async Task<DutyConfig?> FetchDuty(uint zoneId)
+    public async Task<DutyConfig?> FetchDuty(uint zoneId)
     {
-        var tasks = AssetUrls.Select(assetUrl => FetchDutyFromUrl(assetUrl, zoneId)).ToList();
+        var tasks = assetUrls.Select(assetUrl => FetchDutyFromUrl(assetUrl, zoneId)).ToList();
         while (tasks.Count > 0)
         {
             var complete = await Task.WhenAny(tasks);
@@ -49,13 +49,13 @@ internal static class ApiClient
         return null;
     }
 
-    private static async Task<DutyConfig?> FetchDutyFromUrl(string assetUrl, uint zoneId)
+    private async Task<DutyConfig?> FetchDutyFromUrl(string assetUrl, uint zoneId)
     {
         var       url = $"{assetUrl}/duty/{zoneId}";
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
         try
         {
-            var resp = await Client.GetAsync(url, cts.Token);
+            var resp = await client.GetAsync(url, cts.Token);
             if (!resp.IsSuccessStatusCode)
                 return null;
 
@@ -64,4 +64,7 @@ internal static class ApiClient
         }
         catch (Exception) { return null; }
     }
+
+    public void Dispose()
+        => client.Dispose();
 }
