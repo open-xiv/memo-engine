@@ -5,7 +5,7 @@
         <LangVersion>default</LangVersion>
         <Nullable>enable</Nullable>
 
-        <Version>7.4.1</Version>
+        <Version>1.0.6</Version>
         <Authors>酥卷开发组</Authors>
         <Description>酥卷解析引擎</Description>
         <Copyright>Copyright © 2026 酥卷开发组</Copyright>
