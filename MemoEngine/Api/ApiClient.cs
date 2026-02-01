@@ -57,11 +57,7 @@ internal static class ApiClient
         {
             var resp = await Client.GetAsync(url, cts.Token);
             if (!resp.IsSuccessStatusCode)
-            {
-                if (resp.StatusCode == HttpStatusCode.NotFound)
-                    return null;
                 return null;
-            }
 
             var content = await resp.Content.ReadAsStringAsync();
             return JsonConvert.DeserializeObject<DutyConfig>(content);

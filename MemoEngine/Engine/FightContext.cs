@@ -114,8 +114,11 @@ internal class FightContext
                 break;
 
             case DutyEnd:
-                CompletedSnap();
-                Context.Lifecycle = EngineState.WaitingStart;
+                if (Context.Lifecycle is EngineState.Finalizing)
+                {
+                    CompletedSnap();
+                    Context.Lifecycle = EngineState.WaitingStart;
+                }
                 break;
         }
     }
