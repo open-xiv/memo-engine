@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <LangVersion>default</LangVersion>
+        <Nullable>enable</Nullable>
+
+        <Version>7.4.1</Version>
+        <Authors>酥卷开发组</Authors>
+        <Description>酥卷解析引擎</Description>
+        <Copyright>Copyright © 2026 酥卷开发组</Copyright>
+        <PackageProjectUrl>https://github.com/open-xiv/memo-engine</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/open-xiv/memo-engine</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PackageTags>game;tracking;ffxiv;sumemo</PackageTags>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.4"/>
+        <PackageReference Include="System.Threading.Tasks.Dataflow" Version="10.0.2"/>
+    </ItemGroup>
+
+</Project>

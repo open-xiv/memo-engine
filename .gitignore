@@ -1,0 +1,15 @@
+# IDE
+.vs/
+.idea/
+.vscode/
+
+# build
+obj/
+bin/
+*.user
+
+# dist
+dist/
+
+# reliance
+packages/
