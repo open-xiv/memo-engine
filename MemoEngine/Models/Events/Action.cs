@@ -1,4 +1,5 @@
 using System;
+using MemoEngine.Engine;
 
 
 namespace MemoEngine.Models.Events;
@@ -36,11 +37,11 @@ public interface IActionSink
     void RaiseCompleted(DateTimeOffset timeStamp, uint dataId, uint actionId);
 }
 
-internal sealed class ActionSink(Action<IEvent> postEvent) : IActionSink
+internal sealed class ActionSink : IActionSink
 {
     public void RaiseStarted(DateTimeOffset timeStamp, uint dataId, uint actionId)
-        => postEvent(new ActionStarted(timeStamp, dataId, actionId));
+        => RuleEngine.PostEvent(new ActionStarted(timeStamp, dataId, actionId));
 
     public void RaiseCompleted(DateTimeOffset timeStamp, uint dataId, uint actionId)
-        => postEvent(new ActionCompleted(timeStamp, dataId, actionId));
+        => RuleEngine.PostEvent(new ActionCompleted(timeStamp, dataId, actionId));
 }

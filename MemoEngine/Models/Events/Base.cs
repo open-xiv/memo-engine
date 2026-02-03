@@ -23,10 +23,15 @@ public interface IEventSink
     IStatusSink    Status    { get; }
 }
 
-internal sealed class EventSink(Action<IEvent> postEvent) : IEventSink
+internal sealed class EventSink : IEventSink
 {
-    public IGeneralSink   General   { get; } = new GeneralSink(postEvent);
-    public IActionSink    Action    { get; } = new ActionSink(postEvent);
-    public ICombatantSink Combatant { get; } = new CombatantSink(postEvent);
-    public IStatusSink    Status    { get; } = new StatusSink(postEvent);
+    public static IGeneralSink   General   { get; } = new GeneralSink();
+    public static IActionSink    Action    { get; } = new ActionSink();
+    public static ICombatantSink Combatant { get; } = new CombatantSink();
+    public static IStatusSink    Status    { get; } = new StatusSink();
+    
+    IGeneralSink   IEventSink.General   => General;
+    IActionSink    IEventSink.Action    => Action;
+    ICombatantSink IEventSink.Combatant => Combatant;
+    IStatusSink    IEventSink.Status    => Status;
 }

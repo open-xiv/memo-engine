@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using MemoEngine.Engine;
 
 
 namespace MemoEngine.Models.Events;
@@ -48,26 +49,26 @@ public interface IGeneralSink
     void RaisePartyChanged(DateTimeOffset timeStamp, IReadOnlyList<uint> entityIds);
 }
 
-internal sealed class GeneralSink(Action<IEvent> postEvent) : IGeneralSink
+internal sealed class GeneralSink : IGeneralSink
 {
     public void RaiseTerritoryChanged(DateTimeOffset timeStamp, ushort zoneId)
-        => postEvent(new TerritoryChanged(timeStamp, zoneId));
+        => RuleEngine.PostEvent(new TerritoryChanged(timeStamp, zoneId));
 
     public void RaiseDutyCompleted(DateTimeOffset timeStamp)
-        => postEvent(new DutyCompleted(timeStamp));
+        => RuleEngine.PostEvent(new DutyCompleted(timeStamp));
 
     public void RaiseDutyWiped(DateTimeOffset timeStamp)
-        => postEvent(new DutyWiped(timeStamp));
+        => RuleEngine.PostEvent(new DutyWiped(timeStamp));
 
     public void RaiseCombatOptIn(DateTimeOffset timeStamp, IReadOnlyDictionary<uint, PlayerPayload>? partyPlayers)
-        => postEvent(new CombatOptIn(timeStamp, partyPlayers));
+        => RuleEngine.PostEvent(new CombatOptIn(timeStamp, partyPlayers));
 
     public void RaiseCombatOptOut(DateTimeOffset timeStamp)
-        => postEvent(new CombatOptOut(timeStamp));
+        => RuleEngine.PostEvent(new CombatOptOut(timeStamp));
 
     public void RaisePlayerDied(DateTimeOffset timeStamp, uint entityId)
-        => postEvent(new PlayerDied(timeStamp, entityId));
+        => RuleEngine.PostEvent(new PlayerDied(timeStamp, entityId));
 
     public void RaisePartyChanged(DateTimeOffset timeStamp, IReadOnlyList<uint> entityIds)
-        => postEvent(new PartyChanged(timeStamp, entityIds));
+        => RuleEngine.PostEvent(new PartyChanged(timeStamp, entityIds));
 }

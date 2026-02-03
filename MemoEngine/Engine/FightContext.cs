@@ -44,14 +44,11 @@ internal class FightContext
 
     #region Lifecycle
 
-    private readonly Context context;
-
-    public FightContext(Context context, DutyConfig dutyConfig)
+    public FightContext(DutyConfig dutyConfig)
     {
-        this.context    = context;
         this.dutyConfig = dutyConfig;
         ResetState();
-        context.Lifecycle = EngineState.WaitingStart;
+        Context.Lifecycle = EngineState.WaitingStart;
     }
 
     #endregion
@@ -63,7 +60,7 @@ internal class FightContext
         // lifecycle related events
         LifecycleEvent(e);
 
-        if (context.Lifecycle is not EngineState.Recording)
+        if (Context.Lifecycle is not EngineState.Recording)
             return;
 
         // specific events
@@ -75,7 +72,7 @@ internal class FightContext
                 break;
 
             // enemy hp change
-            case CombatantHpUpdated hpChanged when hpChanged.DataId == context.EnemyDataId:
+            case CombatantHpUpdated hpChanged when hpChanged.DataId == Context.EnemyDataId:
                 enemyHp = hpChanged.MaxHp == 0 ? 1 : hpChanged.CurrentHp / hpChanged.MaxHp;
                 break;
         }
@@ -94,11 +91,11 @@ internal class FightContext
         switch (e)
         {
             case CombatOptIn st:
-                if (context.Lifecycle is EngineState.WaitingStart)
+                if (Context.Lifecycle is EngineState.WaitingStart)
                 {
                     ResetState();
                     StartSnap(st.PartyPlayers);
-                    context.Lifecycle = EngineState.Recording;
+                    Context.Lifecycle = EngineState.Recording;
                 }
                 break;
 
@@ -109,14 +106,14 @@ internal class FightContext
             case DutyWiped:
                 isClear = false;
                 CompletedSnap();
-                context.Lifecycle = EngineState.WaitingStart;
+                Context.Lifecycle = EngineState.WaitingStart;
 
                 break;
 
             case DutyCompleted:
                 isClear = true;
                 CompletedSnap();
-                context.Lifecycle = EngineState.WaitingStart;
+                Context.Lifecycle = EngineState.WaitingStart;
                 break;
         }
     }
@@ -155,7 +152,7 @@ internal class FightContext
         {
             PhaseId    = (uint)Math.Max(phaseIndex, 0),
             SubphaseId = (uint)Math.Max(subphaseIndex, 0),
-            EnemyId    = context.EnemyDataId,
+            EnemyId    = Context.EnemyDataId,
             EnemyHp    = enemyHp
         };
 
@@ -171,7 +168,7 @@ internal class FightContext
         };
 
         // notify
-        _ = Task.Run(() => context.RaiseFightFinalized(payload));
+        _ = Task.Run(() => Context.RaiseFightFinalized(payload));
     }
 
     #endregion
@@ -186,7 +183,7 @@ internal class FightContext
         subphaseIndex = -1;
 
         // enemy
-        context.EnemyDataId = 0;
+        Context.EnemyDataId = 0;
 
         // init listeners & variables
         listenerManager.Clear();
@@ -206,7 +203,7 @@ internal class FightContext
         subphaseIndex = -1;
 
         // enemy
-        context.EnemyDataId = phase.TargetId;
+        Context.EnemyDataId = phase.TargetId;
 
         // clear triggers
         listenerManager.Clear();
@@ -230,7 +227,7 @@ internal class FightContext
             listenerManager.Register(new ListenerState(mechanic, mechanic.Trigger));
 
         // enemy
-        context.EnemyDataId = phase.TargetId;
+        Context.EnemyDataId = phase.TargetId;
     }
 
     private void EmitMechanic(Mechanic mechanic)

@@ -5,14 +5,14 @@ using MemoEngine.Models;
 
 namespace MemoEngine;
 
-public class Context
+public static class Context
 {
-    public IReadOnlyList<FormattableString> EventHistory { get; internal set; } = [];
+    public static IReadOnlyList<FormattableString> EventHistory { get; internal set; } = [];
 
-    public EngineState Lifecycle   { get; internal set; } = EngineState.Idle;
-    public uint        EnemyDataId { get; internal set; }
+    public static EngineState Lifecycle   { get; internal set; } = EngineState.Idle;
+    public static uint        EnemyDataId { get; internal set; }
 
-    public event Action<FightRecordPayload>? OnFightFinalized;
+    public static event Action<FightRecordPayload>? OnFightFinalized;
 
-    internal void RaiseFightFinalized(FightRecordPayload payload) => OnFightFinalized?.Invoke(payload);
+    internal static void RaiseFightFinalized(FightRecordPayload payload) => OnFightFinalized?.Invoke(payload);
 }

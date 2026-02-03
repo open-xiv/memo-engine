@@ -1,4 +1,5 @@
 using System;
+using MemoEngine.Engine;
 
 
 namespace MemoEngine.Models.Events;
@@ -31,16 +32,16 @@ internal class StatusRemoved(DateTimeOffset timeStamp, uint entityId, uint statu
 
 public interface IStatusSink
 {
-    void RaiseChanged(DateTimeOffset timeStamp, uint entityId, uint statusId);
+    void RaiseApplied(DateTimeOffset timeStamp, uint entityId, uint statusId);
 
     void RaiseRemoved(DateTimeOffset timeStamp, uint entityId, uint statusId);
 }
 
-internal sealed class StatusSink(Action<IEvent> postEvent) : IStatusSink
+internal class StatusSink : IStatusSink
 {
-    public void RaiseChanged(DateTimeOffset timeStamp, uint entityId, uint statusId)
-        => postEvent(new StatusApplied(timeStamp, entityId, statusId));
+    public void RaiseApplied(DateTimeOffset timeStamp, uint entityId, uint statusId)
+        => RuleEngine.PostEvent(new StatusApplied(timeStamp, entityId, statusId));
 
     public void RaiseRemoved(DateTimeOffset timeStamp, uint entityId, uint statusId)
-        => postEvent(new StatusRemoved(timeStamp, entityId, statusId));
+        => RuleEngine.PostEvent(new StatusRemoved(timeStamp, entityId, statusId));
 }
