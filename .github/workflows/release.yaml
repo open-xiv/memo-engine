@@ -66,3 +66,15 @@ jobs:
                   }
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Publish to NuGet.org
+              shell: pwsh
+              run: |
+                  Get-ChildItem ./nupkg/*.nupkg | ForEach-Object {
+                    dotnet nuget push $_.FullName `
+                      --source "https://api.nuget.org/v3/index.json" `
+                      --api-key $env:NUGET_API_KEY `
+                      --skip-duplicate
+                  }
+              env:
+                  NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
